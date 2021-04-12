@@ -1,11 +1,10 @@
 package clocktest_test
 
 import (
+	"dynamo-hello-world/internal/clock/clocktest"
+	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
-
-	"github.com/mercadolibre/fury_acq-visa-clearing/internal/platform/clock/clocktest"
-	"github.com/stretchr/testify/require"
 )
 
 func TestClock_SpecificMockedNow(t *testing.T) {

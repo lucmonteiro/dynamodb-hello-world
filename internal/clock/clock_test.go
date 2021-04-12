@@ -1,10 +1,10 @@
 package clock_test
 
 import (
+	"dynamo-hello-world/internal/clock"
 	"testing"
 	"time"
 
-	"github.com/mercadolibre/fury_acq-visa-clearing/internal/platform/clock"
 	"github.com/stretchr/testify/require"
 )
 
