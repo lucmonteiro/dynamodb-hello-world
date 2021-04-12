@@ -18,7 +18,7 @@ func GetOrdersByCustomerAndDate(customerID string, c clock.Clock) ([]model.Order
 
 	keyExp := expression.Key("SK").
 		Equal(expression.Value("CUSTOMER#" + customerID)).
-		And(expression.Key("gsi1sk").BeginsWith("ORDERDATE+#" + c.Now().Format("2006-01-02")))
+		And(expression.Key("gsi1sk").BeginsWith("ORDERDATE#" + c.Now().Format("2006-01-02")))
 
 	//filter registers that are not orders
 	filterCondition := expression.Name("PK").BeginsWith("ORDER")

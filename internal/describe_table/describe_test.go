@@ -8,7 +8,3 @@ import (
 func TestDescribeTable(t *testing.T) {
 	DescribeTable(model.TableName)
 }
-
-func TestDescribeTable2(t *testing.T) {
-	DescribeTable("thecakeisalie")
-}
