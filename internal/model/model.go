@@ -13,7 +13,6 @@ const (
 
 type DynamoKey struct {
 	PK string
-	SK string
 }
 
 type Customer struct {
@@ -23,13 +22,14 @@ type Customer struct {
 	LockToken    string     `dynamodbav:"token,omitempty"`
 	LockUntil    *time.Time `dynamodbav:"lock_until,omitempty"`
 	LastUpdateAt time.Time  `dynamodbav:"last_update_at"`
-	GSI1SK       string     `dynamodbav:"gsi1sk"`
+	GSI1SK       string     `dynamodbav:"gsi1sk,omitempty"`
 }
 
 type Order struct {
 	DynamoKey
 	ID       string     `dynamodbav:"id"`
 	Date     *time.Time `dynamodbav:"date"`
+	GSI1PK   string     `dynamodbav:"gsi1pk"`
 	GSI1SK   string     `dynamodbav:"gsi1sk"`
 	Customer Customer   `dynamodbav:"-"`
 }
@@ -46,4 +46,14 @@ func PrintCondition(cond expression.Expression) {
 	}
 
 	fmt.Printf("\n-------- PRINTING CONDITION -----------\n\n")
+}
+
+func AddDynamoKeysToOrders(order *Order) {
+	order.PK = "ORDER#" + order.ID
+	order.GSI1PK = "CUSTOMER#" + order.Customer.ID
+	order.GSI1SK = "ORDERDATE#" + order.Date.Format(time.RFC3339)
+}
+
+func AddDynamoKeysToCustomer(cust *Customer) {
+	cust.PK = "CUSTOMER#" + cust.ID
 }

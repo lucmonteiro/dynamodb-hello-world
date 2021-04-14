@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"os"
 )
@@ -27,6 +26,7 @@ type awsCredentials struct {
 	SecretKey string
 }
 
+//Connects to DynamoDB
 func Connect() *dynamodb.Client {
 	cred := awsCredentials{
 		Region:      os.Getenv(_envRegion),
@@ -56,12 +56,24 @@ func configFromCredentials(ctx context.Context, creds awsCredentials) (aws.Confi
 		return aws.Config{}, fmt.Errorf("could not load aws config, empty creds")
 	}
 
+	//Load default credentials. In this case will work because i have AWS credentials in my ENV
 	cfg, err := config.LoadDefaultConfig(ctx,
 		config.WithRegion(creds.Region),
-		config.WithCredentialsProvider(
-			credentials.NewStaticCredentialsProvider(creds.AccessKeyID, creds.SecretKey, ""),
-		),
 	)
+
+	//to use static credentials, connection would look like this:
+
+	//config.WithCredentialsProvider(
+	//			credentials.NewStaticCredentialsProvider(creds.AccessKeyID, creds.SecretKey, ""),
+	//		),
+
+	//to use role ARN, would look like this:
+	// Create the credentials from AssumeRoleProvider to assume the role ROLE_ARN
+	/*stsSvc := sts.NewFromConfig(cfg)
+	assumedCredentials := stscreds.NewAssumeRoleProvider(stsSvc, ROLE_ARN)
+	return config.LoadDefaultConfig(context.Background(),
+		config.WithCredentialsProvider(assumedCredentials),
+	)*/
 
 	if err != nil {
 		return aws.Config{}, fmt.Errorf("could not load aws config: %w", err)

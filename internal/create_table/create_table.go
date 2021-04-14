@@ -50,10 +50,6 @@ func keySchema() []types.KeySchemaElement {
 			AttributeName: aws.String("PK"),
 			KeyType:       types.KeyTypeHash, //HASH must always be = on queries. It's the key type for "Partition Key"
 		},
-		{
-			AttributeName: aws.String("SK"),
-			KeyType:       types.KeyTypeRange, //RANGE is more flexibe. Can be >, <, begins_with on query, It's the type for "Sort Key"
-		},
 	}
 }
 
@@ -65,7 +61,7 @@ func globalSecondaryIndexes() []types.GlobalSecondaryIndex {
 			IndexName: aws.String(model.GSI1IndexName),
 			KeySchema: []types.KeySchemaElement{
 				{
-					AttributeName: aws.String("SK"),
+					AttributeName: aws.String("gsi1pk"),
 					KeyType:       types.KeyTypeHash, //HASH must always be = on queries. It's the key type for "Partition Key"
 				},
 				{
@@ -111,7 +107,7 @@ func attributeDefinitions() []types.AttributeDefinition {
 			AttributeType: types.ScalarAttributeTypeS, //AttributeTypeS = string
 		},
 		{
-			AttributeName: aws.String("SK"),
+			AttributeName: aws.String("gsi1pk"),
 			AttributeType: types.ScalarAttributeTypeS, //AttributeTypeS = string
 		},
 		{

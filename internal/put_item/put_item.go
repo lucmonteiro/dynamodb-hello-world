@@ -18,7 +18,7 @@ import (
 
 func CreateNewOrder(o model.Order) error {
 	client := connection.Connect()
-	addDynamoKeysToOrders(&o)
+	model.AddDynamoKeysToOrders(&o)
 
 	_, err := client.PutItem(context.Background(), &dynamodb.PutItemInput{
 		Item:      marshalItem(o),
@@ -46,8 +46,7 @@ func CreateNewCustomer(id string) error {
 func LockItem(c clock.Clock, id string) (string, error) {
 	client := connection.Connect()
 
-	expr := expression.AttributeExists(expression.Name("PK")).
-		And(expression.AttributeExists(expression.Name("SK")))
+	expr := expression.AttributeExists(expression.Name("PK"))
 
 	cond, err := expression.NewBuilder().WithCondition(expr).Build()
 	if err != nil {
@@ -68,7 +67,7 @@ func LockItem(c clock.Clock, id string) (string, error) {
 		//builds the Dynamo condition string.
 		//it will look something like (attribute_exists (#0)) AND (attribute_exists (#1))
 		ConditionExpression: cond.Condition(),
-		//tells dynamo the attributes names for this query. #0 = PK #1 = SK
+		//tells dynamo the attributes names for this query. #0 = PK #1 = GSI1PK
 		ExpressionAttributeNames: cond.Names(),
 		//tells dynamo the attribute values (if any). In this case will be blank, as we're only validating a exists conditions (example: update)
 		ExpressionAttributeValues: cond.Values(),
@@ -95,12 +94,7 @@ func Update(c clock.Clock, id, lockToken string) error {
 	item.Name = "4d72416e646572736f6e"
 	item.LastUpdateAt = c.Now()
 
-	//Ensure that keys exist
-	expr := expression.AttributeExists(expression.Name("PK")).
-		And(expression.AttributeExists(expression.Name("SK"))).
-		//ensure that provided token is the on on database
-		And(expression.Name("lock_until").GreaterThan(expression.Value(c.Now())).
-			And(expression.Name("token").Equal(expression.Value(lockToken))))
+	expr := buildLockCondition(c, lockToken)
 	//if token was not provided, register must not be locked
 
 	cond, err := expression.NewBuilder().WithCondition(expr).Build()
@@ -116,7 +110,7 @@ func Update(c clock.Clock, id, lockToken string) error {
 		//builds the Dynamo condition string.
 		//it will look something like (attribute_exists (#0)) AND (attribute_exists (#1))
 		ConditionExpression: cond.Condition(),
-		//tells dynamo the attributes names for this query. #0 = PK #1 = SK
+		//tells dynamo the attributes names for this query. #0 = PK #1 = GSI1PK
 		ExpressionAttributeNames: cond.Names(),
 		//tells dynamo the attribute values (if any). In this case will be blank, as we're only validating a exists conditions (example: update)
 		ExpressionAttributeValues: cond.Values(),
@@ -135,21 +129,23 @@ func Update(c clock.Clock, id, lockToken string) error {
 
 }
 
+func buildLockCondition(c clock.Clock, lockToken string) expression.ConditionBuilder {
+	//Ensure that keys exist
+	expr := expression.AttributeExists(expression.Name("PK")).
+		//ensure that provided token is the on on database
+		And(expression.Name("lock_until").GreaterThan(expression.Value(c.Now())).
+			And(expression.Name("token").Equal(expression.Value(lockToken))))
+	return expr
+}
+
 func buildSampleCustomer(id string) model.Customer {
 	customerItem := model.Customer{
 		ID: id,
 	}
-	customerItem.PK = "CUSTOMER"
-	customerItem.SK = "CUSTOMER#" + customerItem.ID
-	customerItem.GSI1SK = "LATEST"
+
+	model.AddDynamoKeysToCustomer(&customerItem)
 
 	return customerItem
-}
-
-func addDynamoKeysToOrders(order *model.Order) {
-	order.PK = "ORDER#" + order.ID
-	order.SK = "CUSTOMER#" + order.Customer.ID
-	order.GSI1SK = "ORDERDATE#" + order.Date.Format(time.RFC3339)
 }
 
 func marshalItem(item interface{}) map[string]types.AttributeValue {

@@ -16,10 +16,10 @@ func GetItem(id string) (model.Customer, error) {
 
 	result, err := client.GetItem(context.Background(), &dynamodb.GetItemInput{
 		Key: map[string]types.AttributeValue{
-			"PK": &types.AttributeValueMemberS{Value: "CUSTOMER"},
-			"SK": &types.AttributeValueMemberS{Value: "CUSTOMER#" + id},
+			"PK": &types.AttributeValueMemberS{Value: "CUSTOMER#" + id},
 		},
-		TableName: aws.String(model.TableName),
+		ConsistentRead: aws.Bool(true), //enables strong consistency. **** Drawbacks **** ?
+		TableName:      aws.String(model.TableName),
 	})
 
 	if err != nil {
